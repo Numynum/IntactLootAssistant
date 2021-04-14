@@ -1,0 +1,15 @@
+## Interface: 90005
+## Title: !IntactLootAssistant
+## Version: @project-version@
+## Notes: Allows easy rolling out of loot by linking to the RL
+## Author: Numy
+## X-License: GNU General Public License version 3 (GPLv3)
+## SavedVariables:IntactLootAssistantDB
+
+## LoadManagers: AddonLoader
+## X-LoadOn-Always: true
+
+libs\embeds.xml
+
+IntactLootAssistant.lua
+PrettyItemLink.lua
