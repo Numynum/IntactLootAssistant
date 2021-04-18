@@ -98,17 +98,23 @@ function ILA:HandleBnetWhisper(message, bnetIDAccount)
     end
 end
 
-function ILA:ProcessMessage(message, characterName)
-    if (self.db.debug and characterName ~= UnitName('player') .. '-' .. GetRealmName()) then return ; end
-    if (not self.db.override and (not IsInRaid() or not UnitIsGroupLeader('player') or not UnitIsGroupAssistant('player'))) then
-        return ;
+function ILA:ProcessMessage(message, fullName)
+    local characterName, realm = fullName:match('([^-]+)-(.+)')
+    local cleanName = fullName;
+    if(realm == GetRealmName()) then
+        cleanName = characterName;
     end
-    if (not self.db.override and not UnitInRaid(characterName)) then return ; end
+
+    if (self.db.debug and cleanName ~= UnitName('player') .. '-' .. GetRealmName()) then self:Print(1, cleanName); return ; end
+    if (not self.db.override and (not IsInRaid() or (not UnitIsGroupLeader('player') and not UnitIsGroupAssistant('player')))) then
+        self:Print(2, cleanName);  return ;
+    end
+    if (not self.db.override and not UnitInRaid(cleanName)) then self:Print(3, cleanName); return ; end
 
     local itemLink = self:ExtractItemLink(message)
-    if (not itemLink) then return ; end
+    if (not itemLink) then self:Print(4, cleanName); return ; end
 
-    self:CreateLootFrame(characterName, itemLink, message);
+    self:CreateLootFrame(cleanName, itemLink, message);
 end
 
 function ILA:CreateLootFrame(looterName, itemLink, extraMessage)
@@ -255,7 +261,13 @@ function ILA:InitLootFrame(index)
 
     lootFrame.itemContainer:SetScript('onEnter', function() self:ShowItemTooltip(lootFrame); end);
     lootFrame.itemContainer:SetScript('onLeave', function() GameTooltip:Hide(); end);
-    lootFrame.cancelButton:SetScript('OnClick', function() self:HideLootFrame(lootFrame); end);
+    lootFrame.cancelButton:SetScript('OnClick', function()
+        if (lootFrame.rollButton.isRolling) then
+            self:EndRollItem(lootFrame);
+        else
+            self:HideLootFrame(lootFrame);
+        end
+    end);
     lootFrame.rollButton:SetScript('OnClick', function()
         if (lootFrame.rollButton.isRolling) then
             self:EndRollItem(lootFrame);
@@ -298,6 +310,9 @@ function ILA:EndRollItem(lootFrame)
 end
 
 function ILA:RollItem(lootFrame)
+    if(self.watchingRolls) then
+        self:Print('Already watching rolls for another item, end that roll before starting a new one.')
+    end
     SendChatMessage('Roll for ' .. lootFrame.itemLink, 'RAID');
     self.watchingRolls = true;
     lootFrame.rollButton:ToggleRollState(true);

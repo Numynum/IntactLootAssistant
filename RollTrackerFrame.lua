@@ -84,8 +84,8 @@ function module:FillRollFrame(currentRolls)
 
         if ((ILA.db.debug and ILA.db.override) or currentRoll.legal) then
             tinsert(highestRolls, currentRoll);
+            authorRolls[currentRoll.author] = true;
         end
-        authorRolls[currentRoll.author] = true;
     end
     table__sort(highestRolls, function(a, b)
         return a.rollResult > b.rollResult;
@@ -103,7 +103,9 @@ function module:FillRollFrame(currentRolls)
         end
     end
 
-    NPG:browser(clonedRolls);
+    if(ILA.db.debug and NPG and NPG.browser) then
+        NPG:browser(clonedRolls);
+    end
 
     for i = 1, #clonedRolls do
         local currentRoll = clonedRolls[i];
@@ -143,12 +145,16 @@ function module:Init()
     self.colors.green = CreateColor(0, 1, 0);
     self.colors.default = CreateColor(1, 1, 1);
 
+    self:InitFrame();
+end
+
+function module:InitFrame()
     self.frame = CreateFrame("Frame", nil, UIParent);
     self.frame.width = 250;
     self.frame.height = 250;
     self.frame:SetFrameStrata("FULLSCREEN_DIALOG");
     self.frame:SetSize(self.frame.width, self.frame.height);
-    self.frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0);
+    self.frame:SetPoint("TOPRIGHT", ILA.frameHeader:GetName(), "TOPLEFT", 10, 10);
     self.frame:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
