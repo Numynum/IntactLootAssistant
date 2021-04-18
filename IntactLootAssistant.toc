@@ -13,3 +13,4 @@ libs\embeds.xml
 
 IntactLootAssistant.lua
 PrettyItemLink.lua
+RollTrackerFrame.lua

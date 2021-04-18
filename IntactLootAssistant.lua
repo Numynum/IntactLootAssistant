@@ -20,8 +20,9 @@ local UnitName = _G.UnitName;
 local GetRealmName = _G.GetRealmName;
 local RANDOM_ROLL_RESULT = _G.RANDOM_ROLL_RESULT;
 local tonumber = _G.tonumber;
-local RAID_CLASS_COLORS = _G.RAID_CLASS_COLORS;
-local UnitClassBase = _G.UnitClassBase;
+local ROLL = _G.ROLL;
+local CANCEL = _G.CANCEL;
+local SendChatMessage = _G.SendChatMessage;
 
 local name = ...;
 
@@ -55,32 +56,28 @@ function ILA:OnInitialize()
     self.currentRolls = {};
     self.lootFrames = {};
     self:InitFrame();
+    self.rollTrackerFrame:Init();
 
     self:RegisterEvent('CHAT_MSG_BN_WHISPER', function(_, message, _, _, _, _, _, _, _, _, _, _, _, bnetIDAccount, _)
-        self:HandleBnetWhisper(message, bnetIDAccount)
-    end)
+        self:HandleBnetWhisper(message, bnetIDAccount);
+    end);
     self:RegisterEvent('CHAT_MSG_WHISPER', function(_, message, characterName, _)
-        self:HandleWhisper(message, characterName)
-    end)
+        self:HandleWhisper(message, characterName);
+    end);
     self:RegisterEvent('CHAT_MSG_OFFICER', function(_, message, characterName, _)
-        self:HandleWhisper(message, characterName)
-    end)
+        self:HandleWhisper(message, characterName);
+    end);
 
-    self:RegisterEvent('CHAT_MSG_SYSTEM', function(_, message) self:HandleRoll(message) end)
-
+    self:RegisterEvent('CHAT_MSG_SYSTEM', function(_, message) self:HandleRoll(message) end);
 end
 
 function ILA:HandleRoll(message)
     if (not self.watchingRolls) then return ; end
     local author, rollResult, rollMin, rollMax = self:ExtractRollData(message);
-    if not rollResult then return; end
+    if not rollResult then return ; end
 
-    tinsert(self.currentRolls, {author=author, rollResult=rollResult, rollMin=rollMin, rollMax=rollMax})
-end
-
-function ILA:WrapTextInClassColor(unit, text)
-    local classFile = UnitClassBase(unit);
-    return RAID_CLASS_COLORS[classFile]:WrapTextInColorCode(text)
+    tinsert(self.currentRolls, { author = author, rollResult = rollResult, rollMin = rollMin, rollMax = rollMax });
+    self.rollTrackerFrame:FillRollFrame(self.currentRolls);
 end
 
 function ILA:ExtractRollData(message)
@@ -166,7 +163,7 @@ function ILA:InitFrame()
     self.frameHeader.textureBorder:SetSize(10 + 60 + 10 + BUTTON_WIDTH + 10 + BUTTON_WIDTH + 10, 45);
     self.frameHeader.textureBackground = self.frameHeader:CreateTexture();
     local mx, my = self.frameHeader.textureBorder:GetSize();
-    --print(mx, my);
+
     self.frameHeader.textureBackground:SetSize(mx - 4, my - 4);
     self.frameHeader.textureBackground:SetPoint('TOPLEFT', self.frameHeader.textureBorder, 2, -2);
     self.frameHeader.textureBorder:SetColorTexture(.2, .2, .2);
@@ -195,9 +192,7 @@ function ILA:InitFrame()
     self.frameContainer:SetWidth((10 + 60 + 10 + BUTTON_WIDTH + 10 + BUTTON_WIDTH + 10));
     self.frameContainer:SetPoint('BOTTOMLEFT', self.frameHeader, 0, -(80 * 7));
 
-    --self.frameContainer:SetPoint('CENTER', 0, 0);
     for i = 1, 7, 1 do
-        -- create 7 frames;
         self:InitLootFrame(i);
     end
 end
@@ -236,13 +231,21 @@ function ILA:InitLootFrame(index)
     lootFrame.rollButton:SetWidth(BUTTON_WIDTH);
     lootFrame.rollButton:SetHeight(30);
     lootFrame.rollButton:SetPoint('TOPLEFT', 10 + 60 + 10, -40);
-    lootFrame.rollButton:SetText('Roll');
+    lootFrame.rollButton:SetText(ROLL);
+    function lootFrame.rollButton:ToggleRollState(isRolling)
+        lootFrame.rollButton.isRolling = isRolling;
+        if(isRolling) then
+            lootFrame.rollButton:SetText('End roll');
+        else
+            lootFrame.rollButton:SetText(ROLL);
+        end
+    end
 
     lootFrame.cancelButton = CreateFrame('Button', nil, lootFrame, 'UIPanelButtonTemplate');
     lootFrame.cancelButton:SetWidth(BUTTON_WIDTH);
     lootFrame.cancelButton:SetHeight(30);
     lootFrame.cancelButton:SetPoint('TOPLEFT', 10 + 60 + 10 + BUTTON_WIDTH + 10, -40);
-    lootFrame.cancelButton:SetText('Cancel');
+    lootFrame.cancelButton:SetText(CANCEL);
 
     lootFrame.description = lootFrame:CreateFontString(nil, 'ARTWORK', 'GameFontNormal');
     lootFrame.description:SetSize((BUTTON_WIDTH * 2) + 10, 30);
@@ -253,7 +256,13 @@ function ILA:InitLootFrame(index)
     lootFrame.itemContainer:SetScript('onEnter', function() self:ShowItemTooltip(lootFrame); end);
     lootFrame.itemContainer:SetScript('onLeave', function() GameTooltip:Hide(); end);
     lootFrame.cancelButton:SetScript('OnClick', function() self:HideLootFrame(lootFrame); end);
-    lootFrame.rollButton:SetScript('OnClick', function() self:RollItem(lootFrame); end);
+    lootFrame.rollButton:SetScript('OnClick', function()
+        if (lootFrame.rollButton.isRolling) then
+            self:EndRollItem(lootFrame);
+        else
+            self:RollItem(lootFrame);
+        end
+    end);
     lootFrame:Hide();
 
     tinsert(self.lootFrames, lootFrame);
@@ -284,11 +293,12 @@ function ILA:EndRollItem(lootFrame)
     self.watchingRolls = false;
     self.currentRolls = {};
     self:HideLootFrame(lootFrame);
+    lootFrame.rollButton:ToggleRollState(false);
+    self.rollTrackerFrame:ClearAndHide();
 end
 
 function ILA:RollItem(lootFrame)
-    self:Print('Roll for ' .. lootFrame.itemLink);
+    SendChatMessage('Roll for ' .. lootFrame.itemLink, 'RAID');
     self.watchingRolls = true;
-    lootFrame.rollButton:SetScript('OnClick', function() self:EndRollItem(lootFrame); end);
-    lootFrame.rollButton:SetText('End roll');
+    lootFrame.rollButton:ToggleRollState(true);
 end
