@@ -5,17 +5,23 @@ local UIParent = _G.UIParent;
 local GetItemInfo = _G.GetItemInfo;
 local GameTooltip = _G.GameTooltip;
 local tinsert = _G.tinsert;
-local string = _G.string;
-local string__format = string.format;
-local string__sub = string.sub;
-local string__len = string.len;
+local string__format = _G.string.format;
+local string__sub = _G.string.sub;
+local string__gsub = _G.string.gsub;
+local string__len = _G.string.len;
+local string__match = _G.string.match;
 local IsInRaid = _G.IsInRaid;
 local UnitIsGroupLeader = _G.UnitIsGroupLeader;
 local UnitIsGroupAssistant = _G.UnitIsGroupAssistant;
 local UnitInRaid = _G.UnitInRaid;
-local C_BattleNet = _G.C_BattleNet;
-local C_BattleNet__GetAccountInfoByID = C_BattleNet.GetAccountInfoByID
+local C_BattleNet__GetAccountInfoByID = _G.C_BattleNet.GetAccountInfoByID
 local LibStub = _G.LibStub;
+local UnitName = _G.UnitName;
+local GetRealmName = _G.GetRealmName;
+local RANDOM_ROLL_RESULT = _G.RANDOM_ROLL_RESULT;
+local tonumber = _G.tonumber;
+local RAID_CLASS_COLORS = _G.RAID_CLASS_COLORS;
+local UnitClassBase = _G.UnitClassBase;
 
 local name = ...;
 
@@ -28,10 +34,25 @@ end
 
 local BUTTON_WIDTH = 180;
 
+local localisedRollPattern = string__gsub(
+        string__gsub(
+                string__gsub(
+                        string__gsub(RANDOM_ROLL_RESULT, '%(', '%%('),
+                        '%)',
+                        '%%)'
+                ),
+                '%%s',
+                '(.+)'
+        ),
+        '%%d',
+        '(%%d+)'
+)
+
 _G.ILA = ILA;
 
 function ILA:OnInitialize()
     self.db = _G.IntactLootAssistantDB;
+    self.currentRolls = {};
     self.lootFrames = {};
     self:InitFrame();
 
@@ -45,12 +66,27 @@ function ILA:OnInitialize()
         self:HandleWhisper(message, characterName)
     end)
 
-    --local msg = 'got |cffa335ee|Hitem:184031::::::::60:250::82:4:7189:6652:1472:6646:1:28:751:::|h[Sanguine Vintage]|h|r for grabs';
-    --self:CreateLootFrame(
-    --        'Numedain-Draenor',
-    --        self:ExtractItemLink(msg),
-    --        msg
-    --);
+    self:RegisterEvent('CHAT_MSG_SYSTEM', function(_, message) self:HandleRoll(message) end)
+
+end
+
+function ILA:HandleRoll(message)
+    if (not self.watchingRolls) then return ; end
+    local author, rollResult, rollMin, rollMax = self:ExtractRollData(message);
+    if not rollResult then return; end
+
+    tinsert(self.currentRolls, {author=author, rollResult=rollResult, rollMin=rollMin, rollMax=rollMax})
+end
+
+function ILA:WrapTextInClassColor(unit, text)
+    local classFile = UnitClassBase(unit);
+    return RAID_CLASS_COLORS[classFile]:WrapTextInColorCode(text)
+end
+
+function ILA:ExtractRollData(message)
+    local author, rollResult, rollMin, rollMax = string__match(message, localisedRollPattern);
+    if (not author or not rollResult or not rollMin or not rollMax) then return ; end
+    return author, tonumber(rollResult), tonumber(rollMin), tonumber(rollMax);
 end
 
 function ILA:HandleWhisper(message, characterName)
@@ -66,6 +102,7 @@ function ILA:HandleBnetWhisper(message, bnetIDAccount)
 end
 
 function ILA:ProcessMessage(message, characterName)
+    if (self.db.debug and characterName ~= UnitName('player') .. '-' .. GetRealmName()) then return ; end
     if (not self.db.override and (not IsInRaid() or not UnitIsGroupLeader('player') or not UnitIsGroupAssistant('player'))) then
         return ;
     end
@@ -161,12 +198,12 @@ function ILA:InitFrame()
     --self.frameContainer:SetPoint('CENTER', 0, 0);
     for i = 1, 7, 1 do
         -- create 7 frames;
-        self:InitLootframe(i);
+        self:InitLootFrame(i);
     end
 end
 
-function ILA:InitLootframe(index)
-    local previousFrame = _G['ILALootframe'.. (index -1)] or self.frameHeader;
+function ILA:InitLootFrame(index)
+    local previousFrame = _G['ILALootframe' .. (index - 1)] or self.frameHeader;
     local lootFrame = CreateFrame('Frame', 'ILALootframe' .. index, self.frameContainer);
     lootFrame.itemLink = nil;
     lootFrame.looterName = nil;
@@ -199,13 +236,13 @@ function ILA:InitLootframe(index)
     lootFrame.rollButton:SetWidth(BUTTON_WIDTH);
     lootFrame.rollButton:SetHeight(30);
     lootFrame.rollButton:SetPoint('TOPLEFT', 10 + 60 + 10, -40);
-    lootFrame.rollButton.text:SetText('Roll');
+    lootFrame.rollButton:SetText('Roll');
 
     lootFrame.cancelButton = CreateFrame('Button', nil, lootFrame, 'UIPanelButtonTemplate');
     lootFrame.cancelButton:SetWidth(BUTTON_WIDTH);
     lootFrame.cancelButton:SetHeight(30);
     lootFrame.cancelButton:SetPoint('TOPLEFT', 10 + 60 + 10 + BUTTON_WIDTH + 10, -40);
-    lootFrame.cancelButton.text:SetText('Cancel');
+    lootFrame.cancelButton:SetText('Cancel');
 
     lootFrame.description = lootFrame:CreateFontString(nil, 'ARTWORK', 'GameFontNormal');
     lootFrame.description:SetSize((BUTTON_WIDTH * 2) + 10, 30);
@@ -243,6 +280,15 @@ function ILA:HideLootFrame(lootFrame)
     end
 end
 
-function ILA:RollItem(lootFrame)
+function ILA:EndRollItem(lootFrame)
+    self.watchingRolls = false;
+    self.currentRolls = {};
     self:HideLootFrame(lootFrame);
+end
+
+function ILA:RollItem(lootFrame)
+    self:Print('Roll for ' .. lootFrame.itemLink);
+    self.watchingRolls = true;
+    lootFrame.rollButton:SetScript('OnClick', function() self:EndRollItem(lootFrame); end);
+    lootFrame.rollButton:SetText('End roll');
 end

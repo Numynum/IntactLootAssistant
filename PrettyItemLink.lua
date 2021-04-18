@@ -25,7 +25,7 @@ ILA.prettyItemLink = ILA.prettyItemLink or {};
 local module = ILA.prettyItemLink;
 
 local PATTERN_RELIC_TOOLTIP_TYPE = RELIC_TOOLTIP_TYPE:gsub('%%s', '(.+)');
-local PATTERN_ITEM_LEVEL = ITEM_LEVEL:gsub('%%d', '(%%d+)');;
+local PATTERN_ITEM_LEVEL = ITEM_LEVEL:gsub('%%d', '(%%d+)');
 
 local function EscapeSearchString(str)
     return str:gsub('(%W)', '%%%1');
