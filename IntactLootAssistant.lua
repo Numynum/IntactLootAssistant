@@ -105,14 +105,14 @@ function ILA:ProcessMessage(message, fullName)
         cleanName = characterName;
     end
 
-    if (self.db.debug and cleanName ~= UnitName('player') .. '-' .. GetRealmName()) then self:Print(1, cleanName); return ; end
+    if (self.db.debug and cleanName ~= UnitName('player') .. '-' .. GetRealmName()) then return ; end
     if (not self.db.override and (not IsInRaid() or (not UnitIsGroupLeader('player') and not UnitIsGroupAssistant('player')))) then
-        self:Print(2, cleanName);  return ;
+        return ;
     end
-    if (not self.db.override and not UnitInRaid(cleanName)) then self:Print(3, cleanName); return ; end
+    if (not self.db.override and not UnitInRaid(cleanName)) then return ; end
 
     local itemLink = self:ExtractItemLink(message)
-    if (not itemLink) then self:Print(4, cleanName); return ; end
+    if (not itemLink) then return ; end
 
     self:CreateLootFrame(cleanName, itemLink, message);
 end
