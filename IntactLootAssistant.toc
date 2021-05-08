@@ -1,13 +1,11 @@
-## Interface: 90005
+## Interface: @toc-version-retail@
 ## Title: !IntactLootAssistant
 ## Version: @project-version@
 ## Notes: Allows easy rolling out of loot by linking to the RL
 ## Author: Numy
 ## X-License: GNU General Public License version 3 (GPLv3)
 ## SavedVariables:IntactLootAssistantDB
-
-## LoadManagers: AddonLoader
-## X-LoadOn-Always: true
+## X-Curse-Project-ID: 000000
 
 libs\embeds.xml
 
