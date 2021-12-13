@@ -149,7 +149,7 @@ function module:Init()
 end
 
 function module:InitFrame()
-    self.frame = CreateFrame("Frame", nil, UIParent);
+    self.frame = Mixin(CreateFrame("Frame", nil, UIParent), BackdropTemplateMixin);
     self.frame.width = 250;
     self.frame.height = 250;
     self.frame:SetFrameStrata("FULLSCREEN_DIALOG");
