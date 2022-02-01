@@ -3,7 +3,7 @@
 ## Version: @project-version@
 ## Notes: Allows easy rolling out of loot by linking to the RL
 ## Author: Numy
-## X-License: GNU General Public License version 3 (GPLv3)
+## X-License: All rights reserved
 ## SavedVariables:IntactLootAssistantDB
 ## X-Curse-Project-ID: 000000
 
