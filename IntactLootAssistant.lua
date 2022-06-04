@@ -92,6 +92,7 @@ end
 
 function ILA:HandleBnetWhisper(message, bnetIDAccount)
     local accountInfo = C_BattleNet__GetAccountInfoByID(bnetIDAccount)
+	if not accountInfo or not accountInfo.gameAccountInfo then return nil end
     if (accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.characterName and accountInfo.gameAccountInfo.realmName) then
         local characterName = accountInfo.gameAccountInfo.characterName .. '-' .. accountInfo.gameAccountInfo.realmName
         self:ProcessMessage(message, characterName)
