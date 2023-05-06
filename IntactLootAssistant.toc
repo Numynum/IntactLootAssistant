@@ -3,7 +3,7 @@
 ## Version: @project-version@
 ## Notes: Allows easy rolling out of loot by linking to the RL
 ## Author: Numy
-## IconTexture: 982414
+## IconTexture: Interface\Addons\IntactLootAssistant\media\icon
 ## X-License: All rights reserved
 ## SavedVariables:IntactLootAssistantDB
 ## X-Curse-Project-ID: 000000
