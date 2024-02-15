@@ -14,12 +14,12 @@ jobs:
       GITHUB_OAUTH: ${{ secrets.GH_OAUTH }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Replace toc-versions
-        uses: Numynum/ToCVersions@master
+        uses: NumyAddon/ToCVersions@v1
 
 #      - name: Create Retail Package
-#        uses: BigWigsMods/packager@master
+#        uses: BigWigsMods/packager@v2
