@@ -2,7 +2,7 @@
 local _G = getfenv(0);
 local CreateFrame = _G.CreateFrame;
 local UIParent = _G.UIParent;
-local GetItemInfo = _G.GetItemInfo;
+local GetItemInfo = (_G.GetItemInfo or C_Item.GetItemInfo)
 local GameTooltip = _G.GameTooltip;
 local tinsert = _G.tinsert;
 local string__format = _G.string.format;
