@@ -7,6 +7,17 @@
 ## X-License: All rights reserved
 ## SavedVariables:IntactLootAssistantDB
 ## X-Curse-Project-ID: 000000
+## Category-enUS: Loot
+## Category-deDE: Beute
+## Category-esES: Botín
+## Category-esMX: Botín
+## Category-frFR: Butin
+## Category-itIT: Bottino
+## Category-koKR: 전리품
+## Category-ptBR: Saque
+## Category-ruRU: Добыча
+## Category-zhCN: 战利品
+## Category-zhTW: 拾取
 
 libs\embeds.xml
 
