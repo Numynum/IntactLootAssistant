@@ -22,7 +22,7 @@ local RANDOM_ROLL_RESULT = _G.RANDOM_ROLL_RESULT;
 local tonumber = _G.tonumber;
 local ROLL = _G.ROLL;
 local CANCEL = _G.CANCEL;
-local SendChatMessage = _G.SendChatMessage;
+local SendChatMessage = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
 
 local name = ...;
 
